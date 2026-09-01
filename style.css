@@ -629,3 +629,23 @@ h3 .ml-text, h4 .ml-text {
     height: 220px;
   }
 }
+/* --- Footer Styles (Copyright & Developer Info) --- */
+.app-footer {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  margin-top: 10px;
+  border-top: 1px solid var(--card-border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.app-footer p {
+  margin-bottom: 5px;
+}
+
+.app-footer strong {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
