@@ -1,0 +1,631 @@
+:root {
+  --bg-dark: #0a0f1d;
+  --bg-gradient: linear-gradient(135deg, #131b2f 0%, #0a0f1d 100%);
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-hover: rgba(255, 255, 255, 0.08);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.15);
+  --ml-color: #7dd3fc; /* മലയാളം അക്ഷരങ്ങൾക്കുള്ള പ്രത്യേക കളർ */
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* -------------------------------------
+   DESKTOP GRID LAYOUT
+   ------------------------------------- */
+.app-container {
+  width: 100%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 40px;
+  margin: 20px auto;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+}
+
+/* Header & Search */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* --- Malayalam Toggle Switch --- */
+.lang-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+}
+
+.lang-label {
+  font-size: 0.75rem;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #475569;
+  transition: .3s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent);
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+/* --- Malayalam Text Styles --- */
+.ml-text {
+  font-size: 0.75rem;
+  color: var(--ml-color);
+  font-weight: 500;
+  display: inline-block;
+  margin-left: 6px;
+}
+
+h3 .ml-text, h4 .ml-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: block;
+  margin-top: 3px;
+  margin-left: 0;
+}
+
+.sub-title {
+  font-size: 0.7rem !important;
+  opacity: 0.9;
+}
+
+.hidden-ml {
+  display: none !important;
+}
+
+.val-text {
+  color: var(--text-main);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* Search Box */
+.search-box {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  transition: border 0.3s ease;
+}
+
+.search-box:focus-within {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.search-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  color: var(--text-main);
+  font-size: 1rem;
+  outline: none;
+}
+
+.search-box button {
+  background: var(--card-bg);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.search-box button:hover {
+  background: var(--accent);
+  color: #000;
+  transform: translateY(-2px);
+}
+
+/* Base Card Styles */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px);
+  padding: 28px;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.card:hover {
+  background: var(--card-hover);
+}
+
+/* -------------------------------------
+   PREMIUM LIVE CLOCK
+   ------------------------------------- */
+.clock-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 20px;
+  background: linear-gradient(160deg, rgba(56, 189, 248, 0.08), rgba(255, 255, 255, 0.02) 60%);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+}
+
+.clock-glow {
+  position: absolute;
+  top: -60%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(56, 189, 248, 0) 70%);
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+.clock-time {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ffffff 0%, #7dd3fc 60%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
+}
+
+.clock-colon {
+  animation: clockBlink 1s steps(1) infinite;
+  margin: 0 1px;
+}
+
+.clock-seconds {
+  font-size: 1.2rem;
+  font-weight: 600;
+  opacity: 0.55;
+  margin-left: 4px;
+  align-self: center;
+}
+
+.clock-ampm {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 8px;
+  letter-spacing: 1px;
+  -webkit-text-fill-color: var(--accent);
+}
+
+@keyframes clockBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.25; }
+}
+
+.clock-date-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.clock-dot {
+  color: var(--accent);
+  opacity: 0.6;
+  font-size: 0.7rem;
+}
+
+/* Main Weather Display */
+.main-weather {
+  background: linear-gradient(145deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.weather-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.weather-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.weather-header p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.weather-condition-tag {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.weather-body {
+  margin: 30px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.temp-display {
+  font-size: 4.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.temp-unit {
+  font-size: 2.2rem;
+  color: var(--accent);
+  font-weight: 500;
+  vertical-align: super;
+}
+
+.temp-details p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Quick Metrics */
+.metrics-grid {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--card-border);
+  padding-top: 20px;
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-icon {
+  font-size: 1.5rem;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-val {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Sections & Typography */
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* Lifestyle Cards Grid */
+.lifestyle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.lifestyle-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.lifestyle-card:hover {
+  background: var(--card-hover);
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.icon-wrap {
+  font-size: 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.lifestyle-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.lifestyle-info p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Compass Styles */
+.compass-container {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 20px;
+}
+.compass-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid var(--card-border);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.2);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+.compass-arrow {
+  font-size: 2rem;
+  color: var(--accent);
+  transition: transform 0.1s ease-out;
+  text-shadow: 0 0 8px var(--accent);
+}
+.compass-info p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.highlight-text {
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Health Grid */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.health-header h4 {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.aqi-badge {
+  background: #10b981;
+  color: #000;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.uv-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.status-text {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Map Container */
+.map-container {
+  height: 280px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 5-Day Forecast */
+.forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.forecast-item {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s;
+}
+
+.forecast-item:hover {
+  transform: translateX(5px);
+  background: var(--card-hover);
+}
+
+/* Alert Banner */
+.alert-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.hidden { display: none !important; }
+
+/* -------------------------------------
+   MOBILE LAYOUT (Automatic switching)
+   ------------------------------------- */
+@media (max-width: 900px) {
+  body {
+    padding: 10px;
+  }
+  
+  .app-container {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    margin: 0;
+  }
+  
+  .left-panel, .right-panel {
+    gap: 20px;
+  }
+  
+  .lifestyle-grid, .health-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .temp-display {
+    font-size: 3.5rem;
+  }
+  
+  .metrics-grid {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .map-container {
+    height: 220px;
+  }
+}

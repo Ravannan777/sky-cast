@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyCast - Smart Weather & Lifestyle</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1329">
+  <!-- iOS Safari doesn't read icons from manifest.json for "Add to Home Screen" -
+       it needs an explicit apple-touch-icon link, so this was missing before. -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png" type="image/png">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- LEFT PANEL -->
+    <aside class="left-panel">
+      
+      <header class="header">
+        <div class="header-top">
+          <div class="logo">
+            <span class="logo-icon">🌤️</span>
+            <h1>SkyCast</h1>
+          </div>
+          
+          <!-- Malayalam Toggle Switch -->
+          <div class="lang-toggle-container">
+            <span class="lang-label">മലയാളം</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="langToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <input type="text" id="cityInput" placeholder="Search city name...">
+          <button id="searchBtn" title="Search">🔍</button>
+          <button id="gpsBtn" title="Current Location">📍</button>
+        </div>
+      </header>
+
+      <!-- Premium Live Clock -->
+      <div class="clock-card card">
+        <div class="clock-glow"></div>
+        <div class="clock-time">
+          <span id="clockHours">--</span><span class="clock-colon">:</span><span id="clockMinutes">--</span><span class="clock-seconds">:<span id="clockSeconds">--</span></span>
+          <span class="clock-ampm" id="clockAmPm">--</span>
+        </div>
+        <div class="clock-date-row">
+          <span id="clockDay">--</span>
+          <span class="clock-dot">•</span>
+          <span id="clockDate">--</span>
+          <span class="clock-dot">•</span>
+          <span id="clockTz">--</span>
+        </div>
+      </div>
+
+      <div id="alertBanner" class="alert-banner hidden">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-text" id="alertText">Severe weather alert!</div>
+      </div>
+
+      <main class="main-weather card">
+        <div class="weather-header">
+          <div>
+            <h2 id="cityName">--</h2>
+            <p id="currentDate">--</p>
+          </div>
+          <div class="weather-condition-tag" id="weatherDesc">--</div>
+        </div>
+
+        <div class="weather-body">
+          <div class="temp-display">
+            <span id="tempValue">--</span><span class="temp-unit">°C</span>
+          </div>
+          <div class="temp-details">
+            <p>
+              <span class="en-text">Feels Like:</span>
+              <span class="ml-text hidden-ml">അനുഭവപ്പെടുന്നത്:</span> 
+              <span id="feelsLike" class="val-text">--°C</span>
+            </p>
+            <p>High: <span id="tempMax" class="val-text">--°C</span> | Low: <span id="tempMin" class="val-text">--°C</span></p>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-icon">💧</span>
+            <div>
+              <p class="metric-label">
+                <span class="en-text">Humidity</span>
+                <span class="ml-text hidden-ml">ആർദ്രത</span>
+              </p>
+              <p class="metric-val" id="humidity">--%</p>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="metric-icon">💨</span>
+            <div>
+              <p class="metric-label">
+                <span class="en-text">Wind</span>
+                <span class="ml-text hidden-ml">കാറ്റ്</span>
+              </p>
+              <p class="metric-val" id="windSpeed">-- km/h</p>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="metric-icon">🌧️</span>
+            <div>
+              <p class="metric-label">
+                <span class="en-text">Rain</span>
+                <span class="ml-text hidden-ml">മഴ സാധ്യത</span>
+              </p>
+              <p class="metric-val" id="rainChance">-- mm</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <section class="section-container">
+        <h3 class="section-title">
+          <span class="en-text">📅 5-Day Forecast</span>
+          <span class="ml-text hidden-ml">📅 5 ദിവസത്തെ പ്രവചനം</span>
+        </h3>
+        <div class="forecast-list" id="forecastContainer">
+          <!-- Injected via JavaScript -->
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      
+      <section class="section-container">
+        <h3 class="section-title">
+          <span class="en-text">💡 Lifestyle & Daily Guide</span>
+          <span class="ml-text hidden-ml">💡 ജീവിതശൈലി നിർദ്ദേശങ്ങൾ</span>
+        </h3>
+        <div class="lifestyle-grid">
+          <div class="lifestyle-card" id="cardUmbrella">
+            <div class="icon-wrap">☂️</div>
+            <div class="lifestyle-info">
+              <h4>
+                <span class="en-text">Umbrella</span>
+                <span class="ml-text hidden-ml sub-title">കുട</span>
+              </h4>
+              <p id="umbrellaTip">Loading...</p>
+            </div>
+          </div>
+          <div class="lifestyle-card" id="cardClothing">
+            <div class="icon-wrap">👕</div>
+            <div class="lifestyle-info">
+              <h4>
+                <span class="en-text">Clothing</span>
+                <span class="ml-text hidden-ml sub-title">വസ്ത്രധാരണം</span>
+              </h4>
+              <p id="clothingTip">Loading...</p>
+            </div>
+          </div>
+          <div class="lifestyle-card" id="cardLaundry">
+            <div class="icon-wrap">🧺</div>
+            <div class="lifestyle-info">
+              <h4>
+                <span class="en-text">Laundry</span>
+                <span class="ml-text hidden-ml sub-title">തുണി അലക്കൽ</span>
+              </h4>
+              <p id="laundryTip">Loading...</p>
+            </div>
+          </div>
+          <div class="lifestyle-card" id="cardRide">
+            <div class="icon-wrap">🛵</div>
+            <div class="lifestyle-info">
+              <h4>
+                <span class="en-text">Outdoor</span>
+                <span class="ml-text hidden-ml sub-title">യാത്രകൾ</span>
+              </h4>
+              <p id="rideTip">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Compass Section -->
+      <section class="section-container">
+        <h3 class="section-title">
+          <span class="en-text">🧭 Compass & Direction</span>
+          <span class="ml-text hidden-ml">🧭 ദിശാസൂചിക</span>
+        </h3>
+        <div class="card compass-container">
+          <div class="compass-circle">
+            <div class="compass-arrow" id="compassArrow">⬆</div>
+          </div>
+          <div class="compass-info">
+            <p>
+              <span class="en-text">Heading:</span>
+              <span class="ml-text hidden-ml">ദിശ:</span>
+              <span id="compassHeading" class="highlight-text">--°</span>
+            </p>
+            <p>
+              <span class="en-text">Direction:</span>
+              <span class="ml-text hidden-ml">ഭാഗം:</span>
+              <span id="compassDir" class="highlight-text">--</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Health Section -->
+      <section class="section-container">
+        <h3 class="section-title">
+          <span class="en-text">🩺 Health & Environment</span>
+          <span class="ml-text hidden-ml">🩺 ആരോഗ്യ വിവരങ്ങൾ</span>
+        </h3>
+        <div class="health-grid">
+          <div class="health-card card">
+            <div class="health-header">
+              <h4>
+                <span class="en-text">Air Quality (AQI)</span>
+                <span class="ml-text hidden-ml sub-title">വായു ഗുണനിലവാരം</span>
+              </h4>
+              <span class="aqi-badge" id="aqiBadge">--</span>
+            </div>
+            <div class="health-body">
+              <span id="aqiStatus" class="status-text">--</span>
+              <p class="health-tip" id="aqiTip">--</p>
+            </div>
+          </div>
+          <div class="health-card card">
+            <div class="health-header">
+              <h4>
+                <span class="en-text">UV Index</span>
+                <span class="ml-text hidden-ml sub-title">യു.വി ഇൻഡക്സ്</span>
+              </h4>
+              <span class="uv-val" id="uvValue">--</span>
+            </div>
+            <div class="health-body">
+              <span id="uvStatus" class="status-text">--</span>
+              <p class="health-tip" id="uvTip">--</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Radar Section -->
+      <section class="section-container">
+        <h3 class="section-title">
+          <span class="en-text">🗺️ Weather Radar</span>
+          <span class="ml-text hidden-ml">🗺️ കാലാവസ്ഥാ റഡാർ</span>
+        </h3>
+        <div id="weatherMap" class="map-container card"></div>
+      </section>
+
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="api.js"></script>
+  <script src="lifestyleLogic.js"></script>
+  <script src="map.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
