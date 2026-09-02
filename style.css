@@ -29,7 +29,22 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 20px;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+button:focus-visible,
+input:focus-visible,
+[data-clickable]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* -------------------------------------
@@ -74,6 +89,14 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.logo-icon-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: block;
+  box-shadow: 0 4px 14px -4px rgba(56, 189, 248, 0.5);
 }
 
 .logo h1 {
@@ -324,7 +347,23 @@ h3 .ml-text, h4 .ml-text {
 .main-weather {
   background: linear-gradient(145deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(56, 189, 248, 0.2);
+  transition: background 0.6s ease, border-color 0.6s ease, opacity 0.3s ease;
 }
+
+.main-weather.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Hero "mood" — the card's tint reflects the real sky condition it reports.
+   SkyCast is a sky-first product, so the hero should visibly change with it. */
+.mood-clear-day   { background: linear-gradient(145deg, rgba(250, 204, 21, 0.14), rgba(255, 255, 255, 0.02)); border-color: rgba(250, 204, 21, 0.25); }
+.mood-clear-night { background: linear-gradient(145deg, rgba(99, 102, 241, 0.16), rgba(255, 255, 255, 0.02)); border-color: rgba(99, 102, 241, 0.28); }
+.mood-cloudy      { background: linear-gradient(145deg, rgba(148, 163, 184, 0.14), rgba(255, 255, 255, 0.02)); border-color: rgba(148, 163, 184, 0.25); }
+.mood-rain        { background: linear-gradient(145deg, rgba(56, 189, 248, 0.18), rgba(255, 255, 255, 0.02)); border-color: rgba(56, 189, 248, 0.3); }
+.mood-storm       { background: linear-gradient(145deg, rgba(168, 85, 247, 0.16), rgba(255, 255, 255, 0.02)); border-color: rgba(168, 85, 247, 0.28); }
+.mood-snow        { background: linear-gradient(145deg, rgba(224, 242, 254, 0.16), rgba(255, 255, 255, 0.02)); border-color: rgba(224, 242, 254, 0.28); }
+.mood-fog         { background: linear-gradient(145deg, rgba(148, 163, 184, 0.1), rgba(255, 255, 255, 0.02)); border-color: rgba(148, 163, 184, 0.2); }
 
 .weather-header {
   display: flex;
@@ -508,6 +547,16 @@ h3 .ml-text, h4 .ml-text {
   font-size: 1.1rem;
 }
 
+.compass-container {
+  cursor: pointer;
+}
+
+.compass-hint {
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
 /* Health Grid */
 .health-grid {
   display: grid;
@@ -579,6 +628,26 @@ h3 .ml-text, h4 .ml-text {
   background: var(--card-hover);
 }
 
+.forecast-day {
+  flex: 1;
+  font-weight: 500;
+}
+
+.forecast-icon {
+  font-size: 1.3rem;
+  margin: 0 16px;
+}
+
+.forecast-temp {
+  font-weight: 600;
+}
+
+.forecast-temp-min {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
 /* Alert Banner */
 .alert-banner {
   background: rgba(239, 68, 68, 0.15);
@@ -595,11 +664,62 @@ h3 .ml-text, h4 .ml-text {
 .hidden { display: none !important; }
 
 /* -------------------------------------
+   PREMIUM TOAST NOTIFICATIONS
+   (replaces blocking browser alert() popups)
+   ------------------------------------- */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(90vw, 420px);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-soft);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main);
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-error   { border-color: rgba(239, 68, 68, 0.4); }
+.toast-success { border-color: rgba(16, 185, 129, 0.4); }
+.toast-info    { border-color: rgba(56, 189, 248, 0.4); }
+
+.toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+.toast-msg { line-height: 1.4; }
+
+/* -------------------------------------
    MOBILE LAYOUT (Automatic switching)
    ------------------------------------- */
 @media (max-width: 900px) {
   body {
-    padding: 10px;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  }
+
+  .toast-container {
+    top: max(10px, env(safe-area-inset-top));
   }
   
   .app-container {

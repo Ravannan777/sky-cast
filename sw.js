@@ -1,6 +1,11 @@
 // sw.js - Service Worker for Offline Caching & PWA Support
 
-const CACHE_NAME = 'skycast-cache-v2';
+// FIX: bumped v2 -> v3. Without a version bump, browsers that already
+// installed this service worker keep serving the OLD cached JS/CSS forever
+// (that's a classic source of "the bug is still there after I fixed it"
+// reports) — the activate handler below only clears caches whose name
+// doesn't match CACHE_NAME, so this bump is what forces the refresh.
+const CACHE_NAME = 'skycast-cache-v3';
 
 // ഓഫ്‌ലൈനായി സേവ് ചെയ്യേണ്ട പ്രധാന ഫയലുകൾ (ലോക്കൽ ഫയലുകൾ - ഇവ നിർബന്ധമായും കാഷ് ചെയ്യണം)
 const LOCAL_ASSETS = [
@@ -9,6 +14,7 @@ const LOCAL_ASSETS = [
   './style.css',
   './app.js',
   './api.js',
+  './utils.js',
   './lifestyleLogic.js',
   './map.js',
   './manifest.json',
@@ -24,9 +30,6 @@ const EXTERNAL_ASSETS = [
 ];
 
 // 1. Service Worker ഇൻസ്റ്റാൾ ചെയ്യുമ്പോൾ ഫയലുകൾ കാഷ് ചെയ്യുന്നു
-// മുൻപ് എല്ലാ ഫയലുകളും ഒറ്റ cache.addAll()-ൽ ആയിരുന്നു - ഒരു CDN റിക്വസ്റ്റ് (ഉദാ:
-// ഫോണ്ട് / ലീഫ്‌ലെറ്റ്) പരാജയപ്പെട്ടാൽ (ഓഫ്‌ലൈൻ ആയോ, ബ്ലോക്ക് ചെയ്തോ) addAll() മുഴുവനായി
-// പരാജയപ്പെടും, ലോക്കൽ ആപ്പ് ഫയലുകൾ പോലും കാഷ് ആവാതെ പോകും. ഇപ്പോൾ അത് വേർതിരിച്ചിരിക്കുന്നു.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -65,12 +68,19 @@ self.addEventListener('activate', (event) => {
 
 // 3. ഫെച്ച് റിക്വസ്റ്റുകൾ വരുമ്പോൾ (Cache-First Network Fallback)
 self.addEventListener('fetch', (event) => {
+  // FIX: only intercept safe GET requests. Previously every request (POST,
+  // and cross-origin API calls to Open-Meteo/BigDataCloud) went through
+  // caches.match() too — harmless for GET, but non-GET requests would throw
+  // "Request method 'X' is unsupported" when caches.match() tried to read
+  // them, which is exactly the kind of noisy console error users see.
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse; // കാഷിൽ ഉണ്ടെങ്കിൽ അവിടെ നിന്നും ലോഡ് ചെയ്യും
+        return cachedResponse;
       }
-      return fetch(event.request); // ഇല്ലെങ്കിൽ ഇന്റർനെറ്റിൽ നിന്ന് എടുക്കും
+      return fetch(event.request).catch(() => cachedResponse);
     })
   );
 });

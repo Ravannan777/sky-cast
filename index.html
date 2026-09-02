@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>SkyCast - Smart Weather & Lifestyle</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
       <header class="header">
         <div class="header-top">
           <div class="logo">
-            <span class="logo-icon">🌤️</span>
+            <img src="icon-192.png" alt="SkyCast" class="logo-icon-img">
             <h1>SkyCast</h1>
           </div>
           
@@ -37,9 +37,9 @@
         </div>
 
         <div class="search-box">
-          <input type="text" id="cityInput" placeholder="Search city name...">
-          <button id="searchBtn" title="Search">🔍</button>
-          <button id="gpsBtn" title="Current Location">📍</button>
+          <input type="text" id="cityInput" placeholder="Search city name..." aria-label="Search city name">
+          <button id="searchBtn" title="Search" aria-label="Search">🔍</button>
+          <button id="gpsBtn" title="Current Location" aria-label="Use current location">📍</button>
         </div>
       </header>
 
@@ -65,7 +65,7 @@
       </div>
 
       <!-- Main Weather Display (Clickable for Modal) -->
-      <main class="main-weather card" id="mainWeatherCard" style="cursor: pointer;" title="Click for 24-Hour Forecast">
+      <main class="main-weather card" id="mainWeatherCard" data-clickable style="cursor: pointer;" title="Click for 24-Hour Forecast">
         <div class="weather-header">
           <div>
             <h2 id="cityName">--</h2>
@@ -144,7 +144,7 @@
         </h3>
         <div class="lifestyle-grid">
           <!-- കാർഡുകൾ ക്ലിക്ക് ചെയ്യാൻ പാകത്തിൽ ആക്കിയിട്ടുണ്ട് -->
-          <div class="lifestyle-card" id="cardUmbrella" title="Click for more details">
+          <div class="lifestyle-card" id="cardUmbrella" data-clickable title="Click for more details">
             <div class="icon-wrap">☂️</div>
             <div class="lifestyle-info">
               <h4>
@@ -154,7 +154,7 @@
               <p id="umbrellaTip">Loading...</p>
             </div>
           </div>
-          <div class="lifestyle-card" id="cardClothing" title="Click for more details">
+          <div class="lifestyle-card" id="cardClothing" data-clickable title="Click for more details">
             <div class="icon-wrap">👕</div>
             <div class="lifestyle-info">
               <h4>
@@ -164,7 +164,7 @@
               <p id="clothingTip">Loading...</p>
             </div>
           </div>
-          <div class="lifestyle-card" id="cardLaundry" title="Click for more details">
+          <div class="lifestyle-card" id="cardLaundry" data-clickable title="Click for more details">
             <div class="icon-wrap">🧺</div>
             <div class="lifestyle-info">
               <h4>
@@ -174,7 +174,7 @@
               <p id="laundryTip">Loading...</p>
             </div>
           </div>
-          <div class="lifestyle-card" id="cardRide" title="Click for more details">
+          <div class="lifestyle-card" id="cardRide" data-clickable title="Click for more details">
             <div class="icon-wrap">🛵</div>
             <div class="lifestyle-info">
               <h4>
@@ -193,7 +193,7 @@
           <span class="en-text">🧭 Compass & Direction</span>
           <span class="ml-text hidden-ml">🧭 ദിശാസൂചിക</span>
         </h3>
-        <div class="card compass-container">
+        <div class="card compass-container" data-clickable title="Tap to activate the compass">
           <div class="compass-circle">
             <div class="compass-arrow" id="compassArrow">⬆</div>
           </div>
@@ -208,6 +208,10 @@
               <span class="ml-text hidden-ml">ഭാഗം:</span>
               <span id="compassDir" class="highlight-text">--</span>
             </p>
+            <p class="compass-hint" id="compassHint">
+              <span class="en-text">Tap to activate</span>
+              <span class="ml-text hidden-ml">സജീവമാക്കാൻ ടാപ്പ് ചെയ്യുക</span>
+            </p>
           </div>
         </div>
       </section>
@@ -220,7 +224,7 @@
         </h3>
         <div class="health-grid">
           <!-- മോഡൽ ഓപ്പൺ ചെയ്യാൻ id="cardAqi" ചേർത്തു -->
-          <div class="health-card card" id="cardAqi" style="cursor: pointer;" title="Click for AQI details">
+          <div class="health-card card" id="cardAqi" data-clickable style="cursor: pointer;" title="Click for AQI details">
             <div class="health-header">
               <h4>
                 <span class="en-text">Air Quality (AQI)</span>
@@ -234,7 +238,7 @@
             </div>
           </div>
           <!-- മോഡൽ ഓപ്പൺ ചെയ്യാൻ id="cardUv" ചേർത്തു -->
-          <div class="health-card card" id="cardUv" style="cursor: pointer;" title="Click for UV details">
+          <div class="health-card card" id="cardUv" data-clickable style="cursor: pointer;" title="Click for UV details">
             <div class="health-header">
               <h4>
                 <span class="en-text">UV Index</span>
@@ -260,6 +264,9 @@
       </section>
 
     </div>
+    <!-- Toast notifications (replaces blocking alert() popups) -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <!-- MODALS & OVERLAY (Hidden by default) -->
     <div class="modal-overlay" id="modalOverlay"></div>
 
@@ -318,6 +325,7 @@
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="api.js"></script>
+  <script src="utils.js"></script>
   <script src="lifestyleLogic.js"></script>
   <script src="map.js"></script>
   <script src="app.js"></script>

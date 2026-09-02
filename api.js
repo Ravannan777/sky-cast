@@ -7,9 +7,9 @@ const REVERSE_GEOCODE_API = "https://api.bigdatacloud.net/data/reverse-geocode-c
 // Fetch Main Weather, Daily & New Hourly Data
 async function getWeatherData(lat, lon) {
     try {
-        // Added hourly=temperature_2m,precipitation_probability,uv_index,weather_code,wind_speed_10m for modals
+        // hourly weather_code is included so forecast cards & modals can show a real condition icon
         const url = `${WEATHER_API}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto`;
-        
+
         const response = await fetch(url);
         if (!response.ok) throw new Error("Weather data fetch failed");
         return await response.json();
@@ -46,10 +46,13 @@ async function getCityName(lat, lon) {
 }
 
 // Search City by Name
+// FIX: cityName is now URL-encoded — previously a query like "New York" or a
+// Malayalam city name broke the request URL and silently failed the search.
 async function searchCity(cityName) {
     try {
-        const url = `${GEOCODE_API}?name=${cityName}&count=1&language=en&format=json`;
+        const url = `${GEOCODE_API}?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`;
         const response = await fetch(url);
+        if (!response.ok) throw new Error("City search failed");
         const data = await response.json();
         if (data.results && data.results.length > 0) {
             return data.results[0]; // Returns lat, lon, and name

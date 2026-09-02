@@ -33,12 +33,12 @@ const WeatherMap = {
         animate: true,
         duration: 1.5
       });
-      
+
       // മാർക്കർ പുതിയ ലൊക്കേഷനിലേക്ക് മാറ്റുന്നു
       this.marker.setLatLng([lat, lon]);
-      
+
       // മാർക്കറിന് മുകളിൽ നഗരത്തിന്റെ പേര് കാണിക്കാൻ പോപ്പ്-അപ്പ് (Popup)
-      this.marker.bindPopup(`<b>${cityName}</b><br>Weather Location`).openPopup();
+      this.marker.bindPopup(`<b>${cityName}</b><br>${isMalayalam ? 'കാലാവസ്ഥാ സ്ഥലം' : 'Weather Location'}`).openPopup();
     } else {
       // മാപ്പ് ലോഡ് ആയിട്ടില്ലെങ്കിൽ പുതുതായി ലോഡ് ചെയ്യുന്നു
       this.init(lat, lon);
@@ -46,3 +46,15 @@ const WeatherMap = {
     }
   }
 };
+
+// FIX: app.js already called `updateMap(lat, lon)` after every successful
+// fetch (guarded by `typeof updateMap === "function"`), but this bridge
+// function never existed — so the map silently never initialised or moved.
+// This is the piece that was missing.
+function updateMap(lat, lon, cityName) {
+  if (typeof L === "undefined") {
+    console.warn("Leaflet failed to load — map cannot render.");
+    return;
+  }
+  WeatherMap.updateLocation(lat, lon, cityName || "");
+}
