@@ -1,75 +1,137 @@
-// lifestyleLogic.js - Analyzes weather data to provide smart lifestyle & health advice
+// ==========================================
+// SKYCAST 2.0 - LIFESTYLE LOGIC
+// ==========================================
 
-const LifestyleLogic = {
-
-  // 1. കുട (Umbrella) ആവശ്യമുണ്ടോ എന്ന് തീരുമാനിക്കുന്നു
-  getUmbrellaAdvice(rainChance, weatherCode) {
-    // മഴയുമായി ബന്ധപ്പെട്ട WMO കോഡുകൾ (51 മുതൽ 99 വരെ)
-    const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+// മെയിൻ സ്ക്രീനിലെ കാർഡുകളിൽ ചെറിയ ടിപ്സ് കാണിക്കാൻ
+function updateLifestyleGuides(weather) {
+    if (!weather || !weather.current || !weather.hourly) return;
     
-    if (rainChance > 0 || rainCodes.includes(weatherCode)) {
-      return "Yes, definitely carry an umbrella. Rain is expected.";
-    } else if (rainChance === 0 && weatherCode <= 3) {
-      return "No umbrella needed today. The sky is clear.";
-    }
-    return "Keep an umbrella handy just in case.";
-  },
-
-  // 2. വസ്ത്രധാരണം (Clothing)
-  getClothingAdvice(temp) {
-    if (temp >= 32) {
-      return "It's hot. Wear light, breathable cotton clothes.";
-    } else if (temp >= 22) {
-      return "Pleasant weather. Normal casual wear is perfect.";
-    } else if (temp >= 15) {
-      return "A bit chilly. A light jacket or sweater is recommended.";
+    const currentHour = new Date().getHours();
+    const rainChance = weather.hourly.precipitation_probability[currentHour];
+    const temp = weather.current.temperature_2m;
+    const humidity = weather.current.relative_humidity_2m;
+    
+    // 1. Umbrella
+    const umbrellaTip = document.getElementById('umbrellaTip');
+    if (rainChance > 40) {
+        umbrellaTip.textContent = isMalayalam ? "കുട കരുതുക, മഴയ്ക്ക് സാധ്യതയുണ്ട്" : "Take an umbrella, rain expected.";
     } else {
-      return "It's cold outside. Wear warm winter clothing.";
+        umbrellaTip.textContent = isMalayalam ? "ഇപ്പോൾ മഴയ്ക്ക് സാധ്യതയില്ല" : "No rain expected for now.";
     }
-  },
-
-  // 3. തുണി അലക്കൽ (Laundry)
-  // Note: "rainChance" here is actually current precipitation in mm (from Open-Meteo's
-  // `current.precipitation`), not a percentage. The old threshold (> 20) compared a
-  // millimeter value against a percentage-style number, so it almost never fired even
-  // during active rain. Using a realistic mm threshold instead.
-  getLaundryAdvice(rainChance, humidity) {
-    if (rainChance > 0.2) {
-      return "Not a good day for laundry. It's currently raining.";
-    } else if (humidity > 75) {
-      return "Clothes might take longer to dry due to high humidity.";
+    
+    // 2. Clothing
+    const clothingTip = document.getElementById('clothingTip');
+    if (temp > 32) {
+        clothingTip.textContent = isMalayalam ? "കോട്ടൺ വസ്ത്രങ്ങൾ ധരിക്കുക" : "Wear light cotton clothes.";
+    } else if (temp < 22) {
+        clothingTip.textContent = isMalayalam ? "തണുപ്പുള്ള കാലാവസ്ഥ" : "Slightly cold, wear a jacket.";
     } else {
-      return "Perfect day for laundry! Great conditions for drying outside.";
+        clothingTip.textContent = isMalayalam ? "സാധാരണ കാലാവസ്ഥ" : "Comfortable weather.";
     }
-  },
-
-  // 4. യാത്ര / പുറത്തുള്ള ജോലികൾ (Outdoor & Travel)
-  getRideAdvice(windSpeed, weatherCode) {
-    if ([95, 96, 99].includes(weatherCode)) {
-      return "⚠️ Thunderstorm warning! Avoid outdoor activities and riding.";
-    } else if (windSpeed > 40) {
-      return "⚠️ High winds! Be very careful while riding two-wheelers.";
-    } else if ([61, 63, 65, 71, 73, 75].includes(weatherCode)) {
-      return "Roads might be slippery due to rain/snow. Drive safely.";
+    
+    // 3. Laundry
+    const laundryTip = document.getElementById('laundryTip');
+    if (rainChance > 30 || humidity > 80) {
+        laundryTip.textContent = isMalayalam ? "അലക്കാൻ അനുയോജ്യമായ സമയമല്ല" : "Not ideal for laundry today.";
+    } else {
+        laundryTip.textContent = isMalayalam ? "തുണി ഉണക്കാൻ നല്ല സമയം" : "Good time to dry clothes.";
     }
-    return "Great weather for outdoor activities and travel.";
-  },
+    
+    // 4. Outdoor/Ride
+    const rideTip = document.getElementById('rideTip');
+    if (rainChance > 50 || weather.current.wind_speed_10m > 20) {
+        rideTip.textContent = isMalayalam ? "പുറത്തിറങ്ങുന്നത് ഒഴിവാക്കുക" : "Not safe for outdoor activities.";
+    } else {
+        rideTip.textContent = isMalayalam ? "യാത്രകൾക്ക് അനുയോജ്യമായ സമയം" : "Great time for a ride!";
+    }
+}
 
-  // 5. എയർ ക്വാളിറ്റി (AQI) നിർദ്ദേശങ്ങൾ - European AQI Scale അടിസ്ഥാനമാക്കി
-  getAQIStatus(aqi) {
-    // Open-Meteo European AQI നൽകുന്നു (0-100+)
-    if (aqi <= 20) return { status: "Good", color: "#10b981", tip: "Air quality is excellent. Enjoy the outdoors!" };
-    if (aqi <= 40) return { status: "Fair", color: "#34d399", tip: "Air quality is acceptable for most people." };
-    if (aqi <= 60) return { status: "Moderate", color: "#fbbf24", tip: "Sensitive groups should reduce prolonged outdoor exertion." };
-    if (aqi <= 80) return { status: "Poor", color: "#f97316", tip: "Wear a mask. Unhealthy for sensitive groups." };
-    return { status: "Very Poor", color: "#ef4444", tip: "⚠️ Health warning. Everyone should avoid outdoor exertion." };
-  },
-
-  // 6. UV ഇൻഡക്സ് (UV Index) നിർദ്ദേശങ്ങൾ
-  getUVStatus(uv) {
-    if (uv <= 2) return { status: "Low", color: "#10b981", tip: "No sun protection needed. Safe to stay outside." };
-    if (uv <= 5) return { status: "Moderate", color: "#fbbf24", tip: "Wear sunglasses on bright days. Use sunscreen." };
-    if (uv <= 7) return { status: "High", color: "#f97316", tip: "Protection required. Wear sunscreen, hat, and sunglasses." };
-    return { status: "Very High", color: "#ef4444", tip: "⚠️ Extra protection needed. Avoid sun between 10 AM and 4 PM." };
-  }
-};
+// കാർഡിൽ ക്ലിക്ക് ചെയ്യുമ്പോൾ മോഡൽ ഓപ്പൺ ചെയ്ത് ഡീറ്റെയിൽസ് കാണിക്കാൻ
+function openLifestyleModal(cardId, hourlyData) {
+    if (!hourlyData) return;
+    
+    const modalContent = document.getElementById('lifestyleModalContent');
+    const currentHour = new Date().getHours();
+    
+    // അടുത്ത 12 മണിക്കൂറിലെ ഡാറ്റ പരിശോധിക്കാൻ
+    let expectedRainHours = [];
+    let bestLaundryHours = [];
+    let peakTemp = -100;
+    let peakTempHour = "";
+    
+    for (let i = 0; i < 12; i++) {
+        const index = currentHour + i;
+        if (index >= hourlyData.time.length) break;
+        
+        const timeLabel = new Date(hourlyData.time[index]).getHours() + ":00";
+        const rain = hourlyData.precipitation_probability[index];
+        const temp = hourlyData.temperature_2m[index];
+        
+        if (rain > 40) expectedRainHours.push(timeLabel);
+        if (rain < 20 && temp > 25) bestLaundryHours.push(timeLabel);
+        if (temp > peakTemp) {
+            peakTemp = temp;
+            peakTempHour = timeLabel;
+        }
+    }
+    
+    let contentHTML = "";
+    
+    if (cardId === 'cardUmbrella') {
+        const rainTimes = expectedRainHours.length > 0 ? expectedRainHours.join(", ") : (isMalayalam ? "മഴയ്ക്ക് സാധ്യതയില്ല" : "No rain expected");
+        contentHTML = `
+            <div class="modal-detail-row">
+                <div class="modal-detail-label">
+                    <strong>${isMalayalam ? "മഴ വരാൻ സാധ്യതയുള്ള സമയങ്ങൾ" : "Expected Rain Hours"}</strong>
+                    <span>${isMalayalam ? "അടുത്ത 12 മണിക്കൂറിൽ" : "In the next 12 hours"}</span>
+                </div>
+                <div class="modal-detail-value" style="font-size: 1rem;">${rainTimes}</div>
+            </div>
+        `;
+    } 
+    else if (cardId === 'cardClothing') {
+        contentHTML = `
+            <div class="modal-detail-row">
+                <div class="modal-detail-label">
+                    <strong>${isMalayalam ? "ഏറ്റവും കൂടിയ ചൂട് അനുഭവപ്പെടുന്നത്" : "Peak Heat Hour"}</strong>
+                    <span>${isMalayalam ? "ഇന്നത്തെ പരമാവധി താപനില" : "Expected maximum temperature"}</span>
+                </div>
+                <div class="modal-detail-value">${peakTempHour} (${Math.round(peakTemp)}°C)</div>
+            </div>
+        `;
+    }
+    else if (cardId === 'cardLaundry') {
+        const washTimes = bestLaundryHours.length > 0 ? bestLaundryHours[0] + " to " + bestLaundryHours[bestLaundryHours.length-1] : (isMalayalam ? "അനുയോജ്യമല്ല" : "Not recommended");
+        contentHTML = `
+            <div class="modal-detail-row">
+                <div class="modal-detail-label">
+                    <strong>${isMalayalam ? "അലക്കാൻ മികച്ച സമയം" : "Best Time for Laundry"}</strong>
+                    <span>${isMalayalam ? "മഴയില്ലാത്ത, ചൂടുള്ള സമയം" : "Clear skies and warm temps"}</span>
+                </div>
+                <div class="modal-detail-value" style="font-size: 1rem;">${washTimes}</div>
+            </div>
+        `;
+    }
+    else if (cardId === 'cardRide') {
+        contentHTML = `
+            <div class="modal-detail-row">
+                <div class="modal-detail-label">
+                    <strong>${isMalayalam ? "യാത്രാ നിർദ്ദേശം" : "Travel Advisory"}</strong>
+                    <span>${isMalayalam ? "കാലാവസ്ഥാ അടിസ്ഥാനത്തിൽ" : "Based on weather conditions"}</span>
+                </div>
+                <div class="modal-detail-value" style="font-size: 1rem; text-align: right;">
+                    ${expectedRainHours.length > 0 ? (isMalayalam ? "മഴ സാധ്യതയുള്ളതിനാൽ ശ്രദ്ധിക്കുക" : "Take caution, rain expected") : (isMalayalam ? "യാത്രയ്ക്ക് തികച്ചും അനുയോജ്യം" : "Clear for travel")}
+                </div>
+            </div>
+        `;
+    }
+    
+    // മോഡലിലേക്ക് കണ്ടന്റ് ആഡ് ചെയ്യുന്നു
+    modalContent.innerHTML = contentHTML;
+    
+    // മോഡൽ ഓപ്പൺ ആക്കുന്നു
+    const lifestyleModal = document.getElementById('lifestyleModal');
+    const modalOverlay = document.getElementById('modalOverlay');
+    lifestyleModal.classList.add('active');
+    modalOverlay.classList.add('active');
+}

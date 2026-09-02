@@ -539,7 +539,7 @@ h3 .ml-text, h4 .ml-text {
 .uv-val {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #f59e0b;
+ color: #f59e0b;
 }
 
 .status-text {
@@ -629,23 +629,204 @@ h3 .ml-text, h4 .ml-text {
     height: 220px;
   }
 }
-/* --- Footer Styles (Copyright & Developer Info) --- */
-.app-footer {
-  grid-column: 1 / -1;
+/* =========================================
+   SKYCAST 2.0 - MODALS & BOTTOM SHEETS
+   ========================================= */
+
+/* Overlay Background (ഡിസ്പ്ലേ ഇരുണ്ടതാക്കാൻ) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Bottom Sheet Container (താഴെ നിന്നും വരുന്ന കാർഡ്) */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 600px;
+  background: rgba(15, 23, 42, 0.85); /* Dark Premium Glass */
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-bottom: none;
+  border-radius: 32px 32px 0 0;
+  z-index: 1000;
+  padding: 24px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  /* സ്മൂത്ത് ആയ ബൗൺസ് അനിമേഷൻ */
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.bottom-sheet.active {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Header inside Modal */
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sheet-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-main);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(239, 68, 68, 0.9); /* ഹോവർ ചെയ്യുമ്പോൾ ചുവപ്പ് നിറം */
+  transform: scale(1.05);
+}
+
+/* Sheet Content Area */
+.sheet-content {
+  overflow-y: auto;
+  padding-right: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* ഒതുക്കമുള്ള സ്ക്രോൾബാർ */
+.sheet-content::-webkit-scrollbar {
+  width: 5px;
+}
+.sheet-content::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
+}
+
+/* Hourly Forecast Horizontal Scroll (മണിക്കൂർ ഡാറ്റ സ്ക്രോൾ ചെയ്യാൻ) */
+.hourly-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 15px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hourly-container::-webkit-scrollbar {
+  height: 6px;
+}
+.hourly-container::-webkit-scrollbar-thumb {
+  background: var(--accent-soft);
+  border-radius: 10px;
+}
+
+.hourly-item {
+  min-width: 85px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   text-align: center;
-  padding: 20px;
-  margin-top: 10px;
-  border-top: 1px solid var(--card-border);
-  color: var(--text-muted);
+  transition: background 0.3s ease;
+}
+
+.hourly-item:hover {
+  background: var(--card-hover);
+}
+
+.hourly-time {
   font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
-.app-footer p {
-  margin-bottom: 5px;
+.hourly-icon {
+  font-size: 1.8rem;
 }
 
-.app-footer strong {
+.hourly-temp {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.hourly-rain {
+  font-size: 0.8rem;
   color: var(--accent);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Modal-നുള്ളിലെ വിവരങ്ങൾ ലിസ്റ്റ് ആയി കാണിക്കാൻ */
+.modal-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+}
+
+.modal-detail-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-detail-label strong {
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.modal-detail-label span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.modal-detail-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: right;
 }

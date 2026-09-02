@@ -9,8 +9,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1329">
-  <!-- iOS Safari doesn't read icons from manifest.json for "Add to Home Screen" -
-       it needs an explicit apple-touch-icon link, so this was missing before. -->
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png" type="image/png">
 </head>
@@ -66,7 +64,8 @@
         <div class="alert-text" id="alertText">Severe weather alert!</div>
       </div>
 
-      <main class="main-weather card">
+      <!-- Main Weather Display (Clickable for Modal) -->
+      <main class="main-weather card" id="mainWeatherCard" style="cursor: pointer;" title="Click for 24-Hour Forecast">
         <div class="weather-header">
           <div>
             <h2 id="cityName">--</h2>
@@ -122,7 +121,6 @@
           </div>
         </div>
       </main>
-
       <section class="section-container">
         <h3 class="section-title">
           <span class="en-text">📅 5-Day Forecast</span>
@@ -134,6 +132,7 @@
       </section>
 
     </aside>
+    <!-- END OF LEFT PANEL -->
 
     <!-- RIGHT PANEL -->
     <div class="right-panel">
@@ -144,7 +143,8 @@
           <span class="ml-text hidden-ml">💡 ജീവിതശൈലി നിർദ്ദേശങ്ങൾ</span>
         </h3>
         <div class="lifestyle-grid">
-          <div class="lifestyle-card" id="cardUmbrella">
+          <!-- കാർഡുകൾ ക്ലിക്ക് ചെയ്യാൻ പാകത്തിൽ ആക്കിയിട്ടുണ്ട് -->
+          <div class="lifestyle-card" id="cardUmbrella" title="Click for more details">
             <div class="icon-wrap">☂️</div>
             <div class="lifestyle-info">
               <h4>
@@ -154,7 +154,7 @@
               <p id="umbrellaTip">Loading...</p>
             </div>
           </div>
-          <div class="lifestyle-card" id="cardClothing">
+          <div class="lifestyle-card" id="cardClothing" title="Click for more details">
             <div class="icon-wrap">👕</div>
             <div class="lifestyle-info">
               <h4>
@@ -164,7 +164,7 @@
               <p id="clothingTip">Loading...</p>
             </div>
           </div>
-          <div class="lifestyle-card" id="cardLaundry">
+          <div class="lifestyle-card" id="cardLaundry" title="Click for more details">
             <div class="icon-wrap">🧺</div>
             <div class="lifestyle-info">
               <h4>
@@ -174,7 +174,7 @@
               <p id="laundryTip">Loading...</p>
             </div>
           </div>
-          <div class="lifestyle-card" id="cardRide">
+          <div class="lifestyle-card" id="cardRide" title="Click for more details">
             <div class="icon-wrap">🛵</div>
             <div class="lifestyle-info">
               <h4>
@@ -219,7 +219,8 @@
           <span class="ml-text hidden-ml">🩺 ആരോഗ്യ വിവരങ്ങൾ</span>
         </h3>
         <div class="health-grid">
-          <div class="health-card card">
+          <!-- മോഡൽ ഓപ്പൺ ചെയ്യാൻ id="cardAqi" ചേർത്തു -->
+          <div class="health-card card" id="cardAqi" style="cursor: pointer;" title="Click for AQI details">
             <div class="health-header">
               <h4>
                 <span class="en-text">Air Quality (AQI)</span>
@@ -232,7 +233,8 @@
               <p class="health-tip" id="aqiTip">--</p>
             </div>
           </div>
-          <div class="health-card card">
+          <!-- മോഡൽ ഓപ്പൺ ചെയ്യാൻ id="cardUv" ചേർത്തു -->
+          <div class="health-card card" id="cardUv" style="cursor: pointer;" title="Click for UV details">
             <div class="health-header">
               <h4>
                 <span class="en-text">UV Index</span>
@@ -258,15 +260,62 @@
       </section>
 
     </div>
+    <!-- MODALS & OVERLAY (Hidden by default) -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <!-- 1. Weather Details Modal (24-Hour Forecast) -->
+    <div class="bottom-sheet" id="weatherModal">
+      <div class="sheet-header">
+        <h3>
+          <span class="en-text">24-Hour Forecast</span>
+          <span class="ml-text hidden-ml">24-മണിക്കൂർ പ്രവചനം</span>
+        </h3>
+        <button class="close-btn" id="closeWeatherModal">✕</button>
+      </div>
+      <div class="sheet-content">
+        <div class="hourly-container" id="hourlyForecastList">
+          <!-- Hourly items will be injected here via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Lifestyle Details Modal -->
+    <div class="bottom-sheet" id="lifestyleModal">
+      <div class="sheet-header">
+        <h3>
+          <span class="en-text">Lifestyle Insights</span>
+          <span class="ml-text hidden-ml">ജീവിതശൈലി വിവരങ്ങൾ</span>
+        </h3>
+        <button class="close-btn" id="closeLifestyleModal">✕</button>
+      </div>
+      <div class="sheet-content" id="lifestyleModalContent">
+        <!-- Content will be injected here via JavaScript -->
+      </div>
+    </div>
+
+    <!-- 3. Health & Environment Modal -->
+    <div class="bottom-sheet" id="healthModal">
+      <div class="sheet-header">
+        <h3>
+          <span class="en-text">Health Details</span>
+          <span class="ml-text hidden-ml">ആരോഗ്യ വിവരങ്ങൾ</span>
+        </h3>
+        <button class="close-btn" id="closeHealthModal">✕</button>
+      </div>
+      <div class="sheet-content" id="healthModalContent">
+         <!-- Content will be injected here via JavaScript -->
+      </div>
+    </div>
+
     <!-- Footer with Developer Info & Copyright -->
-      <footer class="app-footer">
-        <p>Developed by <strong>SREENAND</strong></p>
-        <p>&copy; 2026 SkyCast. All Rights Reserved.</p>
-      </footer>
+    <footer class="app-footer">
+      <p>Developed by <strong>SREENAND</strong></p>
+      <p>&copy; 2026 SkyCast. All Rights Reserved.</p>
+    </footer>
 
+  </div> <!-- End of app-container -->
 
-  </div>
-
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="api.js"></script>
   <script src="lifestyleLogic.js"></script>

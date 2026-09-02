@@ -1,274 +1,372 @@
-// app.js - Main Application Logic for SkyCast
+// ==========================================
+// SKYCAST 2.0 - MAIN APP LOGIC (Part 1)
+// ==========================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  
-  // 1. DOM Elements (UI ഭാഗങ്ങൾ)
-  const cityInput = document.getElementById('cityInput');
-  const searchBtn = document.getElementById('searchBtn');
-  const gpsBtn = document.getElementById('gpsBtn');
-  
-  // പുതിയത്: Malayalam Toggle Elements
-  const langToggle = document.getElementById('langToggle');
-  const mlTexts = document.querySelectorAll('.ml-text');
-  
-  // 2. Service Worker രജിസ്ട്രേഷൻ (PWA ആക്കാൻ)
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(() => console.log('Service Worker Registered'))
-        .catch(err => console.error('SW Registration Failed:', err));
-    });
-  }
+// Global Variables to store fetched data
+let currentLat = 11.8745; // Default latitude (Kannur)
+let currentLon = 75.3704; // Default longitude (Kannur)
+let hourlyWeatherData = null; 
+let currentAqiData = null;
+let isMalayalam = false;
 
-  // 3. Malayalam Language Toggle Logic
-  // മുമ്പ് തിരഞ്ഞെടുത്ത ഭാഷ സേവ് ചെയ്തിട്ടുണ്ടോ എന്ന് നോക്കുന്നു
-  const isMalayalam = localStorage.getItem('useMalayalam') === 'true';
-  langToggle.checked = isMalayalam;
-  toggleMalayalam(isMalayalam);
+// --- DOM Elements ---
+const langToggle = document.getElementById('langToggle');
+const searchBtn = document.getElementById('searchBtn');
+const gpsBtn = document.getElementById('gpsBtn');
+const cityInput = document.getElementById('cityInput');
 
-  // സ്വിച്ച് ഓൺ/ഓഫ് ചെയ്യുമ്പോൾ
-  langToggle.addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
-    localStorage.setItem('useMalayalam', isChecked);
-    toggleMalayalam(isChecked);
-  });
-
-  // മലയാളം ടെക്സ്റ്റുകൾ കാണിക്കാനും മറയ്ക്കാനുമുള്ള ഫംഗ്ഷൻ
-  function toggleMalayalam(show) {
-    mlTexts.forEach(el => {
-      if (show) {
-        el.classList.remove('hidden-ml');
-      } else {
-        el.classList.add('hidden-ml');
-      }
-    });
-  }
-
-  // 3.5 Premium Live Clock (ഓരോ സെക്കൻഡിലും അപ്ഡേറ്റ് ആകുന്ന ക്ലോക്ക്)
-  const clockHours = document.getElementById('clockHours');
-  const clockMinutes = document.getElementById('clockMinutes');
-  const clockSeconds = document.getElementById('clockSeconds');
-  const clockAmPm = document.getElementById('clockAmPm');
-  const clockDay = document.getElementById('clockDay');
-  const clockDate = document.getElementById('clockDate');
-  const clockTz = document.getElementById('clockTz');
-
-  function pad(n) {
-    return n.toString().padStart(2, '0');
-  }
-
-  function updateClock() {
+// --- Live Clock Function ---
+function updateClock() {
     const now = new Date();
     let hours = now.getHours();
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12;
+    hours = hours ? hours : 12; 
+    
+    document.getElementById('clockHours').textContent = hours.toString().padStart(2, '0');
+    document.getElementById('clockMinutes').textContent = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('clockSeconds').textContent = now.getSeconds().toString().padStart(2, '0');
+    document.getElementById('clockAmPm').textContent = ampm;
 
-    if (clockHours) clockHours.textContent = pad(hours);
-    if (clockMinutes) clockMinutes.textContent = pad(now.getMinutes());
-    if (clockSeconds) clockSeconds.textContent = pad(now.getSeconds());
-    if (clockAmPm) clockAmPm.textContent = ampm;
-    if (clockDay) clockDay.textContent = now.toLocaleDateString('en-US', { weekday: 'long' });
-    if (clockDate) clockDate.textContent = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-    if (clockTz) {
-      try {
-        const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        clockTz.textContent = tzName ? tzName.split('/').pop().replace('_', ' ') : '';
-      } catch (e) {
-        clockTz.textContent = '';
-      }
-    }
-  }
+    const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const daysMl = ['ഞായർ', 'തിങ്കൾ', 'ചൊവ്വ', 'ബുധൻ', 'വ്യാഴം', 'വെള്ളി', 'ശനി'];
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const day = isMalayalam ? daysMl[now.getDay()] : daysEn[now.getDay()];
+    const dateStr = `${now.getDate()} ${monthsEn[now.getMonth()]} ${now.getFullYear()}`;
+    
+    document.getElementById('clockDay').textContent = day;
+    document.getElementById('clockDate').textContent = dateStr;
+    document.getElementById('clockTz').textContent = 'IST';
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-  updateClock();
-  setInterval(updateClock, 1000);
+// --- Language Toggle ---
+langToggle.addEventListener('change', (e) => {
+    isMalayalam = e.target.checked;
+    document.querySelectorAll('.en-text').forEach(el => {
+        el.style.display = isMalayalam ? 'none' : 'inline-block';
+    });
+    document.querySelectorAll('.ml-text').forEach(el => {
+        el.style.display = isMalayalam ? 'inline-block' : 'none';
+        if(isMalayalam) el.classList.remove('hidden-ml');
+    });
+    // Refresh UI with existing data
+    updateUI(); 
+});
 
-  // 4. ഡിഫോൾട്ട് ആയി ഒരു നഗരം ലോഡ് ചെയ്യുക (അല്ലെങ്കിൽ അവസാനം നോക്കിയ നഗരം)
-  const savedCity = localStorage.getItem('lastCity') || 'Kadachira';
-  loadWeatherByCity(savedCity);
-
-  // 5. Search Button & Enter Key
-  searchBtn.addEventListener('click', () => {
-    const city = cityInput.value.trim();
-    if (city) loadWeatherByCity(city);
-  });
-
-  cityInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      const city = cityInput.value.trim();
-      if (city) loadWeatherByCity(city);
-    }
-  });
-
-  // 6. GPS Button (Current Location - ഹൈ അക്യുറസി)
-  gpsBtn.addEventListener('click', () => {
+// --- GPS Location (Fix for SIM Network Issue) ---
+function getGPSLocation() {
+    // Check if geolocation is supported by the browser
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          
-          // ലൊക്കേഷന്റെ കൃത്യമായ പേര് കണ്ടുപിടിക്കുന്നു (Reverse Geocoding)
-          const exactLocation = await WeatherAPI.getCityNameFromCoords(lat, lon);
-          
-          loadWeatherByCoords(lat, lon, exactLocation);
-          localStorage.setItem('lastCity', exactLocation);
-        },
-        (error) => {
-          alert('GPS ഉപയോഗിക്കാൻ അനുമതി നൽകിയിട്ടില്ല. ഫോണിൽ Location On ആക്കുക.');
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 } // കൃത്യമായ ലൊക്കേഷൻ കിട്ടാൻ
-      );
-    }
-  });
-
-  // 7. COMPASS Feature (വടക്കുനോക്കിയന്ത്രം)
-  const compassArrow = document.getElementById('compassArrow');
-  const compassHeading = document.getElementById('compassHeading');
-  const compassDir = document.getElementById('compassDir');
-  const compassCard = document.querySelector('.compass-container');
-
-  function startCompass() {
-    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-    window.addEventListener('deviceorientation', handleOrientation, true);
-  }
-
-  if (window.DeviceOrientationEvent && compassArrow) {
-    // iOS 13+ Safari requires an explicit permission request triggered by a user
-    // gesture (like a tap) before it will fire 'deviceorientation' events at all.
-    // The old code just added the listeners directly, so on iPhones the compass
-    // silently never updated. Android/other browsers don't need this step.
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-      if (compassHeading) compassHeading.textContent = "Tap to enable";
-      if (compassDir) compassDir.textContent = "--";
-      const requestIOSPermission = () => {
-        DeviceOrientationEvent.requestPermission()
-          .then((state) => {
-            if (state === 'granted') {
-              startCompass();
-            } else {
-              if (compassHeading) compassHeading.textContent = "Permission denied";
+        alert(isMalayalam ? "കൃത്യമായ വിവരങ്ങൾക്ക് ലൊക്കേഷൻ (GPS) പെർമിഷൻ നൽകുക." : "Please allow Location (GPS) permission for accurate weather.");
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                // Success: Got real GPS coordinates
+                currentLat = position.coords.latitude;
+                currentLon = position.coords.longitude;
+                cityInput.value = ""; 
+                fetchAndDisplayData();
+            },
+            (error) => {
+                // Failed: User denied or GPS off
+                console.warn("GPS Error: ", error.message);
+                alert(isMalayalam ? "ലൊക്കേഷൻ കണ്ടെത്താനായില്ല. ദയവായി ഫോണിലെ ജി.പി.എസ് (GPS) ഓൺ ചെയ്യുക." : "Could not get location. Please turn on GPS/Location in your device settings.");
+            },
+            {
+                enableHighAccuracy: true, // Forces GPS over Network/SIM location
+                timeout: 10000,
+                maximumAge: 0
             }
-          })
-          .catch((err) => {
-            console.error('Compass permission error:', err);
-            if (compassHeading) compassHeading.textContent = "Not Supported";
-          });
-      };
-      if (compassCard) compassCard.addEventListener('click', requestIOSPermission, { once: true });
+        );
     } else {
-      startCompass();
+        alert("Geolocation is not supported by this browser.");
     }
-  } else {
-    if (compassHeading) compassHeading.textContent = "Not Supported";
-  }
+}
 
-  function handleOrientation(event) {
-    let alpha = event.webkitCompassHeading || Math.abs(event.alpha - 360);
-    if (alpha && compassArrow) {
-      compassArrow.style.transform = `rotate(${alpha}deg)`;
-      compassHeading.textContent = `${Math.round(alpha)}°`;
-      
-      const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"];
-      compassDir.textContent = directions[Math.round(((alpha %= 360) < 0 ? alpha + 360 : alpha) / 45)];
-    }
-  }
+// GPS Button Click
+gpsBtn.addEventListener('click', getGPSLocation);
+// ==========================================
+// SKYCAST 2.0 - MAIN APP LOGIC (Part 2)
+// ==========================================
 
-  // --- പ്രധാന ഫംഗ്ഷനുകൾ ---
-
-  async function loadWeatherByCity(city) {
-    const geoData = await WeatherAPI.getCoordinates(city);
-    if (!geoData) {
-      alert("നഗരം കണ്ടെത്താനായില്ല. ശരിയായ പേര് നൽകുക.");
-      return;
+// --- Search City ---
+searchBtn.addEventListener('click', async () => {
+    const cityName = cityInput.value.trim();
+    if (!cityName) return;
+    
+    // Change button icon to indicate loading
+    const originalIcon = searchBtn.innerHTML;
+    searchBtn.innerHTML = "⏳";
+    
+    const result = await searchCity(cityName); // from api.js
+    
+    if (result) {
+        currentLat = result.latitude;
+        currentLon = result.longitude;
+        fetchAndDisplayData();
+    } else {
+        alert(isMalayalam ? "സ്ഥലം കണ്ടെത്താനായില്ല! ദയവായി സ്പെല്ലിംഗ് പരിശോധിക്കുക." : "City not found! Please check the spelling.");
     }
     
-    localStorage.setItem('lastCity', geoData.name);
-    loadWeatherByCoords(geoData.lat, geoData.lon, `${geoData.name}, ${geoData.country}`);
-  }
+    searchBtn.innerHTML = originalIcon;
+});
 
-  async function loadWeatherByCoords(lat, lon, locationName) {
-    const data = await WeatherAPI.getWeatherData(lat, lon);
-    if (!data) return;
+// Trigger search on Enter key press
+cityInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchBtn.click();
+});
 
-    updateUI(locationName, data.weather, data.aqi);
-    WeatherMap.updateLocation(lat, lon, locationName);
-  }
+// --- Fetch & Update Main Data ---
+async function fetchAndDisplayData() {
+    try {
+        // Fetch all required data simultaneously (functions from api.js)
+        const [weather, aqi, cityName] = await Promise.all([
+            getWeatherData(currentLat, currentLon),
+            getAqiData(currentLat, currentLon),
+            getCityName(currentLat, currentLon)
+        ]);
 
-  function updateUI(locationName, weatherData, aqiData) {
-    const current = weatherData.current;
-    const daily = weatherData.daily;
-    const weatherInfo = WeatherAPI.getWeatherDescription(current.weather_code);
+        if (!weather) throw new Error("Failed to load weather data");
 
-    // --- Basic Weather Details ---
-    document.getElementById('cityName').textContent = locationName;
-    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-    document.getElementById('weatherDesc').innerHTML = `${weatherInfo.icon} ${weatherInfo.text}`;
+        // Store data globally for Modals (to be used in Part 3)
+        hourlyWeatherData = weather.hourly; 
+        currentAqiData = aqi;
+
+        updateMainUI(weather, aqi, cityName);
+        updateForecastUI(weather.daily);
+        
+        // Update Leaflet Map if map.js is active
+        if (typeof updateMap === "function") {
+            updateMap(currentLat, currentLon);
+        }
+        
+        // Update Lifestyle data if lifestyleLogic.js is active
+        if (typeof updateLifestyleGuides === "function") {
+            updateLifestyleGuides(weather);
+        }
+
+    } catch (error) {
+        console.error("Error updating UI:", error);
+        alert(isMalayalam ? "ഡാറ്റ ലഭിക്കുന്നതിൽ തടസ്സം നേരിട്ടു." : "Error fetching data. Please check your connection.");
+    }
+}
+
+// --- Update Main UI Elements ---
+function updateMainUI(weather, aqi, cityName) {
+    const current = weather.current;
+    const daily = weather.daily;
     
+    // Basic Weather Information
+    document.getElementById('cityName').textContent = cityName;
     document.getElementById('tempValue').textContent = Math.round(current.temperature_2m);
     document.getElementById('feelsLike').textContent = `${Math.round(current.apparent_temperature)}°C`;
-    document.getElementById('tempMax').textContent = `${Math.round(daily.temperature_2m_max[0])}°C`;
-    document.getElementById('tempMin').textContent = `${Math.round(daily.temperature_2m_min[0])}°C`;
-    
     document.getElementById('humidity').textContent = `${current.relative_humidity_2m}%`;
     document.getElementById('windSpeed').textContent = `${current.wind_speed_10m} km/h`;
     document.getElementById('rainChance').textContent = `${current.precipitation} mm`;
 
-    // --- Lifestyle Advice (lifestyleLogic.js വഴി) ---
-    document.getElementById('umbrellaTip').textContent = LifestyleLogic.getUmbrellaAdvice(current.precipitation, current.weather_code);
-    document.getElementById('clothingTip').textContent = LifestyleLogic.getClothingAdvice(current.apparent_temperature);
-    document.getElementById('laundryTip').textContent = LifestyleLogic.getLaundryAdvice(current.precipitation, current.relative_humidity_2m);
-    document.getElementById('rideTip').textContent = LifestyleLogic.getRideAdvice(current.wind_speed_10m, current.weather_code);
-
-    // --- Health & AQI ---
-    const aqiVal = aqiData.current.european_aqi;
-    const aqiInfo = LifestyleLogic.getAQIStatus(aqiVal);
-    const aqiBadge = document.getElementById('aqiBadge');
-    aqiBadge.textContent = aqiVal;
-    aqiBadge.style.backgroundColor = aqiInfo.color;
-    document.getElementById('aqiStatus').textContent = aqiInfo.status;
-    document.getElementById('aqiStatus').style.color = aqiInfo.color;
-    document.getElementById('aqiTip').textContent = aqiInfo.tip;
-
-    const uvVal = daily.uv_index_max[0];
-    const uvInfo = LifestyleLogic.getUVStatus(uvVal);
-    const uvBadge = document.getElementById('uvValue');
-    uvBadge.textContent = uvVal;
-    uvBadge.style.color = uvInfo.color;
-    document.getElementById('uvStatus').textContent = uvInfo.status;
-    document.getElementById('uvStatus').style.color = uvInfo.color;
-    document.getElementById('uvTip').textContent = uvInfo.tip;
-
-    // --- Severe Weather Alert Banner ---
-    const alertBanner = document.getElementById('alertBanner');
-    const alertText = document.getElementById('alertText');
-    if (current.wind_speed_10m > 50 || [95, 96, 99].includes(current.weather_code)) {
-      alertBanner.classList.remove('hidden');
-      alertText.textContent = "⚠️ Severe Weather Alert: Please stay indoors and stay safe!";
-    } else {
-      alertBanner.classList.add('hidden');
+    // Daily High/Low Temperature
+    if(daily && daily.temperature_2m_max) {
+        document.getElementById('tempMax').textContent = `${Math.round(daily.temperature_2m_max[0])}°C`;
+        document.getElementById('tempMin').textContent = `${Math.round(daily.temperature_2m_min[0])}°C`;
     }
 
-    // --- 5-Day Forecast ---
-    const forecastContainer = document.getElementById('forecastContainer');
-    forecastContainer.innerHTML = ''; // പഴയ ഡാറ്റ ക്ലിയർ ചെയ്യുന്നു
+    // AQI Update (Basic View for Health Card)
+    if(aqi && aqi.current) {
+        const aqiVal = aqi.current.european_aqi;
+        document.getElementById('aqiBadge').textContent = aqiVal;
+        
+        let status = "Good";
+        if(aqiVal > 50) status = "Moderate";
+        if(aqiVal > 100) status = "Poor";
+        document.getElementById('aqiStatus').textContent = status;
+    }
+
+    // UV Index Update (Current Hour)
+    if(weather.hourly && weather.hourly.uv_index) {
+        const currentHour = new Date().getHours();
+        const uvVal = weather.hourly.uv_index[currentHour] || 0;
+        document.getElementById('uvValue').textContent = Math.round(uvVal);
+        
+        let uvStatus = "Low";
+        if(uvVal >= 3) uvStatus = "Moderate";
+        if(uvVal >= 6) uvStatus = "High";
+        document.getElementById('uvStatus').textContent = uvStatus;
+    }
+}
+
+// --- Update 5-Day Forecast ---
+function updateForecastUI(daily) {
+    const container = document.getElementById('forecastContainer');
+    if(!container || !daily) return;
+    container.innerHTML = ""; // Clear existing
     
-    // അടുത്ത 5 ദിവസത്തെ ഡാറ്റ ലൂപ്പ് ചെയ്ത് കാണിക്കുന്നു
-    for (let i = 1; i <= 5; i++) {
-      const date = new Date(daily.time[i]);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      const dayWeather = WeatherAPI.getWeatherDescription(daily.weather_code[i]);
-      const maxT = Math.round(daily.temperature_2m_max[i]);
-      const minT = Math.round(daily.temperature_2m_min[i]);
-
-      const forecastHTML = `
-        <div class="forecast-item">
-          <div class="forecast-day">${dayName}</div>
-          <div class="forecast-icon">${dayWeather.icon}</div>
-          <div class="forecast-temp"><span>${maxT}°</span> / ${minT}°</div>
-        </div>
-      `;
-      forecastContainer.innerHTML += forecastHTML;
+    for(let i = 1; i <= 5; i++) {
+        if(!daily.time[i]) break;
+        const date = new Date(daily.time[i]);
+        
+        const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const daysMl = ['ഞായർ', 'തിങ്കൾ', 'ചൊവ്വ', 'ബുധൻ', 'വ്യാഴം', 'വെള്ളി', 'ശനി'];
+        const dayName = isMalayalam ? daysMl[date.getDay()] : daysEn[date.getDay()];
+        
+        const maxT = Math.round(daily.temperature_2m_max[i]);
+        const minT = Math.round(daily.temperature_2m_min[i]);
+        
+        const div = document.createElement('div');
+        div.className = "forecast-item";
+        div.innerHTML = `
+            <span>${dayName}</span>
+            <span class="forecast-temp" style="font-weight: 600;">${maxT}° / <span style="color: var(--text-muted); font-weight: normal;">${minT}°</span></span>
+        `;
+        container.appendChild(div);
     }
-  }
+}
+// ==========================================
+// SKYCAST 2.0 - MAIN APP LOGIC (Part 3)
+// ==========================================
+
+// --- Modal DOM Elements ---
+const modalOverlay = document.getElementById('modalOverlay');
+const weatherModal = document.getElementById('weatherModal');
+const lifestyleModal = document.getElementById('lifestyleModal');
+const healthModal = document.getElementById('healthModal');
+
+const mainWeatherCard = document.getElementById('mainWeatherCard');
+const closeBtns = document.querySelectorAll('.close-btn');
+
+// --- Helper: Close All Modals ---
+function closeAllModals() {
+    modalOverlay.classList.remove('active');
+    weatherModal.classList.remove('active');
+    lifestyleModal.classList.remove('active');
+    healthModal.classList.remove('active');
+}
+
+// Close modals when clicking the overlay or close (X) buttons
+modalOverlay.addEventListener('click', closeAllModals);
+closeBtns.forEach(btn => btn.addEventListener('click', closeAllModals));
+
+// --- 1. Weather Details Modal (24-Hour Data) ---
+mainWeatherCard.addEventListener('click', () => {
+    if (!hourlyWeatherData) return;
+    
+    const hourlyList = document.getElementById('hourlyForecastList');
+    hourlyList.innerHTML = ""; // Clear old data
+
+    const currentHourIndex = new Date().getHours();
+    
+    // Loop through the next 24 hours
+    for (let i = 0; i < 24; i++) {
+        const index = currentHourIndex + i;
+        if (index >= hourlyWeatherData.time.length) break;
+
+        const timeString = new Date(hourlyWeatherData.time[index]);
+        const hourLabel = timeString.getHours() === currentHourIndex && i === 0 ? 
+                          (isMalayalam ? "ഇപ്പോൾ" : "Now") : 
+                          timeString.getHours() + ":00";
+                          
+        const temp = Math.round(hourlyWeatherData.temperature_2m[index]);
+        const rainChance = hourlyWeatherData.precipitation_probability[index];
+
+        const item = document.createElement('div');
+        item.className = 'hourly-item';
+        item.innerHTML = `
+            <span class="hourly-time">${hourLabel}</span>
+            <span class="hourly-icon">${rainChance > 50 ? '🌧️' : (timeString.getHours() > 18 || timeString.getHours() < 6 ? '🌙' : '☀️')}</span>
+            <span class="hourly-temp">${temp}°</span>
+            <span class="hourly-rain">${rainChance}% Rain</span>
+        `;
+        hourlyList.appendChild(item);
+    }
+    
+    weatherModal.classList.add('active');
+    modalOverlay.classList.add('active');
+});
+
+// --- 2. Lifestyle Modal Links ---
+// Note: Actual logic is handled in lifestyleLogic.js, here we just open the modal.
+const lifestyleCards = ['cardUmbrella', 'cardClothing', 'cardLaundry', 'cardRide'];
+lifestyleCards.forEach(cardId => {
+    const card = document.getElementById(cardId);
+    if(card) {
+        card.addEventListener('click', () => {
+            if(typeof openLifestyleModal === "function") {
+                openLifestyleModal(cardId, hourlyWeatherData); // Calls function from lifestyleLogic.js
+            }
+        });
+    }
+});
+
+// --- 3. Health & Environment Modal (AQI & UV) ---
+document.getElementById('cardAqi').addEventListener('click', () => {
+    if (!currentAqiData) return;
+    
+    const content = document.getElementById('healthModalContent');
+    const aqi = currentAqiData.current;
+    
+    content.innerHTML = `
+        <div class="modal-detail-row">
+            <div class="modal-detail-label">
+                <strong>PM 2.5</strong>
+                <span>${isMalayalam ? 'അപകടകരമായ പൊടിപടലങ്ങൾ' : 'Fine Particles'}</span>
+            </div>
+            <div class="modal-detail-value">${aqi.pm2_5} µg/m³</div>
+        </div>
+        <div class="modal-detail-row">
+            <div class="modal-detail-label">
+                <strong>PM 10</strong>
+                <span>${isMalayalam ? 'വലിയ പൊടിപടലങ്ങൾ' : 'Coarse Particles'}</span>
+            </div>
+            <div class="modal-detail-value">${aqi.pm10} µg/m³</div>
+        </div>
+        <div class="modal-detail-row">
+            <div class="modal-detail-label">
+                <strong>Ozone (O3)</strong>
+                <span>${isMalayalam ? 'ഓസോൺ അളവ്' : 'Surface Ozone'}</span>
+            </div>
+            <div class="modal-detail-value">${aqi.ozone} µg/m³</div>
+        </div>
+    `;
+    
+    healthModal.classList.add('active');
+    modalOverlay.classList.add('active');
+});
+
+document.getElementById('cardUv').addEventListener('click', () => {
+    if (!hourlyWeatherData) return;
+    
+    const content = document.getElementById('healthModalContent');
+    const currentHour = new Date().getHours();
+    const maxUv = Math.max(...hourlyWeatherData.uv_index.slice(currentHour, currentHour + 12));
+    
+    content.innerHTML = `
+        <div class="modal-detail-row">
+            <div class="modal-detail-label">
+                <strong>${isMalayalam ? 'ഇപ്പോഴത്തെ യു.വി' : 'Current UV'}</strong>
+                <span>${isMalayalam ? 'സൂര്യപ്രകാശത്തിന്റെ കാഠിന്യം' : 'Sun exposure level'}</span>
+            </div>
+            <div class="modal-detail-value">${Math.round(hourlyWeatherData.uv_index[currentHour])}</div>
+        </div>
+        <div class="modal-detail-row">
+            <div class="modal-detail-label">
+                <strong>${isMalayalam ? 'ഇന്നത്തെ പരമാവധി യു.വി' : 'Today\'s Max UV'}</strong>
+                <span>${isMalayalam ? 'ഏറ്റവും അപകടകരമായ സമയം' : 'Highest point today'}</span>
+            </div>
+            <div class="modal-detail-value">${Math.round(maxUv)}</div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 10px;">
+            ${maxUv > 5 ? (isMalayalam ? 'പുറത്തിറങ്ങുമ്പോൾ നിർബന്ധമായും സൺസ്ക്രീൻ ഉപയോഗിക്കുക.' : 'Sunscreen is highly recommended today.') : (isMalayalam ? 'സൂര്യപ്രകാശം സുരക്ഷിതമാണ്.' : 'UV levels are safe today.')}
+        </p>
+    `;
+    
+    healthModal.classList.add('active');
+    modalOverlay.classList.add('active');
+});
+
+// --- Initialize App on Load ---
+window.addEventListener('load', () => {
+    // Start by fetching default data (Kannur) until GPS is clicked
+    fetchAndDisplayData();
 });
